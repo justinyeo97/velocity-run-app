@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { ENDPOINTS } from '../App'
+import { requireSupabase, supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -16,10 +17,33 @@ function getAuthUser(token) {
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [authReady, setAuthReady] = useState(false)
+
+  useEffect(() => {
+    if (!supabase) {
+      setAuthReady(true)
+      return undefined
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.access_token) {
+        localStorage.setItem('token', session.access_token)
+        setToken(session.access_token)
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('token')
+        setToken(null)
+      }
+
+      if (event === 'INITIAL_SESSION') setAuthReady(true)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   function logout() {
     localStorage.removeItem('token')
     setToken(null)
+    if (supabase) supabase.auth.signOut().catch(() => {})
   }
 
   async function apiFetch(url, options = {}) {
@@ -64,8 +88,17 @@ export function AuthProvider({ children }) {
     })
   }
 
+  async function loginWithGoogle() {
+    const client = requireSupabase()
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/login` },
+    })
+    if (error) throw error
+  }
+
   return (
-    <AuthContext.Provider value={{ token, user: getAuthUser(token || ''), login, signup, logout, apiFetch }}>
+    <AuthContext.Provider value={{ token, user: getAuthUser(token || ''), authReady, login, signup, loginWithGoogle, logout, apiFetch }}>
       {children}
     </AuthContext.Provider>
   )

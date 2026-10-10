@@ -40,7 +40,8 @@
 }
 
 .menu-toggle:focus-visible,
-.sidebar-link:focus-visible {
+.sidebar-link:focus-visible,
+.sidebar-logout:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -169,6 +170,31 @@
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .16em;
+}
+
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 49px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 227, 61, .22);
+  border-radius: 11px;
+  background: rgba(255, 227, 61, .07);
+  color: var(--flash-yellow);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
+}
+
+.sidebar-logout:hover {
+  border-color: rgba(255, 227, 61, .5);
+  background: rgba(255, 227, 61, .14);
 }
 
 .pulse-dot {
@@ -333,6 +359,10 @@
   .site-sidebar,
   .menu-toggle span,
   .sidebar-link {
+    transition: none;
+  }
+
+  .sidebar-logout {
     transition: none;
   }
 }

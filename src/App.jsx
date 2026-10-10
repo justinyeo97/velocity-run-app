@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AuthProvider, useAuth } from './context/login'
 import Signup from './pages/signup'
@@ -29,12 +29,14 @@ export const ENDPOINTS = {
 }
 
 function RequireAuth({ children }) {
-  const { token } = useAuth()
+  const { token, authReady } = useAuth()
+  if (!authReady) return <main className="auth-card card">Loading your session…</main>
   return token ? children : <Navigate to="/login" replace />
 }
 
 function GuestOnly({ children }) {
-  const { token } = useAuth()
+  const { token, authReady } = useAuth()
+  if (!authReady) return <main className="auth-card card">Loading your session…</main>
   return token ? <Navigate to="/feed" replace /> : children
 }
 
@@ -46,8 +48,9 @@ const navItems = [
 ]
 
 function Nav() {
-  const { token } = useAuth()
+  const { token, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
   useEffect(() => setOpen(false), [location.pathname])
@@ -62,6 +65,12 @@ function Nav() {
   }, [open])
 
   if (!token) return null
+
+  function handleLogout() {
+    logout()
+    setOpen(false)
+    navigate('/login', { replace: true })
+  }
 
   return (
     <>
@@ -96,6 +105,15 @@ function Nav() {
           ))}
         </nav>
         <div className="sidebar-footer"><span className="pulse-dot" />EVERY SECOND COUNTS</div>
+        <button
+          className="sidebar-logout"
+          type="button"
+          tabIndex={open ? 0 : -1}
+          onClick={handleLogout}
+        >
+          <span className="sidebar-icon" aria-hidden="true">{'\u21AA'}</span>
+          Log out
+        </button>
       </aside>
     </>
   )

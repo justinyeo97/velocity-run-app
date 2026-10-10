@@ -3,12 +3,24 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/login'
 
 export default function Signup() {
-  const { signup } = useAuth()
+  const { signup, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [googlePending, setGooglePending] = useState(false)
+
+  async function handleGoogleSignup() {
+    setError('')
+    setGooglePending(true)
+    try {
+      await loginWithGoogle()
+    } catch (err) {
+      setError(err.message)
+      setGooglePending(false)
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -27,6 +39,10 @@ export default function Signup() {
       <span className="auth-kicker">JOIN THE RUNNING CLUB</span>
       <h1>Sign up</h1>
       <p className="auth-intro">Connect with runners and share your progress.</p>
+      <button className="btn btn-outline-secondary w-100 mb-3" type="button" onClick={handleGoogleSignup} disabled={googlePending}>
+        {googlePending ? 'Connecting to Google...' : 'Continue with Google'}
+      </button>
+      <p className="auth-intro">Or sign up with email</p>
       <p><input className="form-control" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} /></p>
       <p><input className="form-control" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required /></p>
       <p><input className="form-control" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /></p>
