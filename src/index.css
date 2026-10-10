@@ -1,0 +1,81 @@
+:root {
+  --flash-ink: #111218;
+  --flash-panel: #191a22;
+  --flash-yellow: #ffe33d;
+  --flash-muted: #a4a5b0;
+  --text: #b5b6c0;
+  --text-h: #fff;
+  --bg: var(--flash-ink);
+  --border: #30313b;
+  --accent: var(--flash-yellow);
+  --accent-bg: rgba(255, 227, 61, .1);
+  --accent-border: rgba(255, 227, 61, .5);
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  font: 16px/1.5 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--flash-ink);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  line-height: 1.2;
+}
+
+a {
+  color: var(--flash-yellow);
+}
