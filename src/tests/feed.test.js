@@ -47,7 +47,7 @@ beforeEach(() => {
       return newPost
     }
 
-    if (url === ENDPOINTS.posts) return createdPosts
+    if (url === ENDPOINTS.posts || url.startsWith(`${ENDPOINTS.posts}?`)) return createdPosts
     if (url === ENDPOINTS.runs) return runsResponse
     if (url === ENDPOINTS.follow || url === ENDPOINTS.friends) return []
     throw new Error(`Unexpected API request: ${url}`)

@@ -9,7 +9,12 @@ function getAuthUser(token) {
     const encodedPayload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
     const paddedPayload = encodedPayload.padEnd(Math.ceil(encodedPayload.length / 4) * 4, '=')
     const claims = JSON.parse(atob(paddedPayload))
-    return { ...claims.user_metadata, id: claims.sub }
+    return {
+      ...claims.user_metadata,
+      email: claims.email ?? claims.user_metadata?.email,
+      created_at: claims.created_at ?? claims.user_metadata?.created_at,
+      id: claims.sub,
+    }
   } catch {
     return null
   }

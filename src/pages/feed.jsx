@@ -8,6 +8,7 @@ function getPostAuthorId(post) {
 }
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024
+const POSTS_PAGE_SIZE = 5
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 const EMPTY_RUN_FORM = {
   title: '',
@@ -37,6 +38,18 @@ function normalizePostsResponse(response) {
     image_url: post.image_url ?? post.imageUrl ?? null,
     run: normalizeRun(post.run ?? post.run_info ?? post.runInfo ?? post.run_data ?? post.runData ?? (Array.isArray(post.runs) ? post.runs[0] : null)),
   }))
+}
+
+function responseHasMorePosts(response, allRows, offset, pageLength) {
+  const pagination = response?.pagination ?? response?.meta?.pagination ?? response?.meta ?? {}
+  const hasMore = response?.has_more ?? response?.hasMore ?? pagination.has_more ?? pagination.hasMore
+  if (typeof hasMore === 'boolean') return hasMore
+
+  const total = Number(response?.total ?? pagination.total ?? response?.count ?? pagination.count)
+  if (Number.isFinite(total)) return offset + pageLength < total
+
+  if (allRows.length > pageLength) return offset + pageLength < allRows.length
+  return pageLength === POSTS_PAGE_SIZE
 }
 
 function normalizeRun(run) {
@@ -163,6 +176,9 @@ export default function Feed() {
   const { apiFetch } = auth
   const currentUserId = auth.user?.id
   const [posts, setPosts] = useState([])
+  const [postOffset, setPostOffset] = useState(0)
+  const [hasMorePosts, setHasMorePosts] = useState(true)
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false)
   const [latestRuns, setLatestRuns] = useState([])
   const [runsLoading, setRunsLoading] = useState(true)
   const [runsError, setRunsError] = useState('')
@@ -223,14 +239,35 @@ export default function Feed() {
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
 
-  function loadPosts() {
-    return apiFetch(ENDPOINTS.posts, { cache: 'no-store' })
-      .then((response) => {
-        setPosts(normalizePostsResponse(response))
-        setPostsError('')
+  async function loadPosts(append = false) {
+    const offset = append ? postOffset : 0
+    if (append) setLoadingMorePosts(true)
+    else setLoading(true)
+
+    try {
+      const query = new URLSearchParams({ limit: String(POSTS_PAGE_SIZE), offset: String(offset) })
+      const response = await apiFetch(`${ENDPOINTS.posts}?${query}`, { cache: 'no-store' })
+      const allRows = normalizePostsResponse(response)
+      const pagePosts = allRows.length > POSTS_PAGE_SIZE
+        ? allRows.slice(offset, offset + POSTS_PAGE_SIZE)
+        : allRows
+      const currentIds = new Set((append ? posts : []).map((post) => post.id).filter((id) => id != null).map(String))
+      const hasNewPosts = pagePosts.some((post) => post.id == null || !currentIds.has(String(post.id)))
+
+      setPosts((current) => {
+        if (!append) return pagePosts
+        const existingIds = new Set(current.map((post) => post.id).filter((id) => id != null).map(String))
+        return [...current, ...pagePosts.filter((post) => post.id == null || !existingIds.has(String(post.id)))]
       })
-      .catch((err) => setPostsError(`Could not load posts: ${err.message}`))
-      .finally(() => setLoading(false))
+      setPostOffset(offset + pagePosts.length)
+      setHasMorePosts(hasNewPosts && responseHasMorePosts(response, allRows, offset, pagePosts.length))
+      setPostsError('')
+    } catch (err) {
+      setPostsError(`Could not load posts: ${err.message}`)
+    } finally {
+      if (append) setLoadingMorePosts(false)
+      else setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -368,9 +405,9 @@ export default function Feed() {
     <div className="club-feed">
       <header className="feed-heading">
         <div>
-          <span className="feed-kicker">A LITTLE HANGOUT FOR YOU & YOUR PALS</span>
-          <h1>Club Feed <span aria-hidden="true">{'\u26A1'}</span></h1>
-          <p>Updates, milestones, and stories from your running crew.</p>
+          <span className="feed-kicker">YOU ARE ENTERING</span>
+          <h1>The Speed Force</h1>
+          <p>Updates, milestones, and stories from your fellow speedsters.</p>
         </div>
       </header>
       <div className="feed-layout">
@@ -674,6 +711,18 @@ export default function Feed() {
           </article>
         )
           })}
+          {!loading && posts.length > 0 && hasMorePosts && (
+            <div className="feed-pagination">
+              <button
+                className="feed-load-more"
+                type="button"
+                onClick={() => loadPosts(true)}
+                disabled={loadingMorePosts}
+              >
+                {loadingMorePosts ? 'Loading posts...' : 'Load 5 more posts'}
+              </button>
+            </div>
+          )}
         </main>
 
         <aside className="feed-sidebar" aria-label="Run leaderboard">

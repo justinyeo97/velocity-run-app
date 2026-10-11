@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   friends: 'https://soc-med-api-production.up.railway.app/friends',
   // follow: `${API_URL}/follow`, // POST { followed_id } & GET all followed users
   follow: 'https://soc-med-api-production.up.railway.app/follow',
+  // runs: `${API_URL}/runs`, // GET the current user's runs OR post a new run
   runs: 'https://soc-med-api-production.up.railway.app/runs',
 }
 
@@ -42,6 +43,7 @@ function GuestOnly({ children }) {
 
 const navItems = [
   { label: 'Feed', path: '/feed', icon: '\u2726' },
+  { label: 'Friends', path: '/friends', icon: '\u{1F91D}' },
   { label: 'Profile', path: '/profile', icon: '\u25C9' },
   { label: 'My Runs', path: '/runs', icon: '\u2197' },
 ]

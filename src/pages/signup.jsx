@@ -34,21 +34,66 @@ export default function Signup() {
   }
 
   return (
-    <form className="auth-card card" onSubmit={handleSubmit}>
-      <div className="auth-mascot" aria-hidden="true">{'\u26A1'}</div>
-      <span className="auth-kicker">JOIN THE RUNNING CLUB</span>
-      <h1>Sign up</h1>
-      <p className="auth-intro">Connect with runners and share your progress.</p>
-      <button className="btn btn-outline-secondary w-100 mb-3" type="button" onClick={handleGoogleSignup} disabled={googlePending}>
-        {googlePending ? 'Connecting to Google...' : 'Continue with Google'}
-      </button>
-      <p className="auth-intro">Or sign up with email</p>
-      <p><input className="form-control" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} /></p>
-      <p><input className="form-control" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required /></p>
-      <p><input className="form-control" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required /></p>
-      <button className="btn btn-primary auth-submit" type="submit">Sign up</button>
-      {error && <p className="alert alert-danger auth-error" role="alert">{error}</p>}
-      <p className="auth-switch">Already have an account? <Link to="/login">Log in</Link></p>
-    </form>
+    <main className="auth-page">
+      <Link className="auth-brand" to="/signup" aria-label="Velocity Run Club home">
+        <span className="brand-mark" aria-hidden="true">{ '\u26A1' }</span>
+        <span>VELOCITY<span className="brand-subtitle">RUN CLUB</span></span>
+      </Link>
+
+      <form className="auth-card card" onSubmit={handleSubmit}>
+        <div className="auth-heading">
+          <span className="auth-kicker">BECOME SPEED</span>
+          <h1>Sign up</h1>
+          <p className="auth-intro">Connect with runners and share your progress.</p>
+        </div>
+
+        <button className="google-login-button" type="button" onClick={handleGoogleSignup} disabled={googlePending}>
+          <span className="google-login-mark" aria-hidden="true">G</span>
+          {googlePending ? 'Connecting to Google...' : 'Continue with Google'}
+        </button>
+
+        <div className="auth-divider"><span>OR SIGN UP WITH EMAIL</span></div>
+
+        <label className="auth-field" htmlFor="signup-username">Username</label>
+        <input
+          id="signup-username"
+          className="form-control auth-input"
+          type="text"
+          placeholder="Username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <label className="auth-field" htmlFor="signup-email">Email</label>
+        <input
+          id="signup-email"
+          className="form-control auth-input"
+          type="email"
+          placeholder="Email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <label className="auth-field" htmlFor="signup-password">Password</label>
+        <input
+          id="signup-password"
+          className="form-control auth-input"
+          type="password"
+          placeholder="Password"
+          autoComplete="new-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        <button className="btn auth-submit" type="submit">Sign up</button>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <p className="auth-switch">Already have an account? <Link to="/login">Log in</Link></p>
+      </form>
+      <p className="auth-tagline"><span className="pulse-dot" />EVERY SECOND COUNTS</p>
+    </main>
   )
 }
