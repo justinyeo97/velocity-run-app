@@ -7,7 +7,6 @@ import Feed from './pages/feed'
 import Friends from './pages/friends'
 import Profile from './pages/profile'
 import Runs from './pages/runs'
-import Leaderboards from './pages/leaderboards'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 
@@ -26,6 +25,7 @@ export const ENDPOINTS = {
   friends: 'https://soc-med-api-production.up.railway.app/friends',
   // follow: `${API_URL}/follow`, // POST { followed_id } & GET all followed users
   follow: 'https://soc-med-api-production.up.railway.app/follow',
+  runs: 'https://soc-med-api-production.up.railway.app/runs',
 }
 
 function RequireAuth({ children }) {
@@ -44,7 +44,6 @@ const navItems = [
   { label: 'Feed', path: '/feed', icon: '\u2726' },
   { label: 'Profile', path: '/profile', icon: '\u25C9' },
   { label: 'My Runs', path: '/runs', icon: '\u2197' },
-  { label: 'Leaderboards', path: '/leaderboards', icon: '\u265B' },
 ]
 
 function Nav() {
@@ -131,7 +130,6 @@ export default function App() {
           <Route path="friends" element={<RequireAuth><Friends /></RequireAuth>} />
           <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
           <Route path="runs" element={<RequireAuth><Runs /></RequireAuth>} />
-          <Route path="leaderboards" element={<RequireAuth><Leaderboards /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/feed" replace />} />
         </Routes>
       </BrowserRouter>

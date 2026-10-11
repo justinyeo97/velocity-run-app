@@ -9,6 +9,19 @@ function getPostAuthorId(post) {
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const EMPTY_RUN_FORM = {
+  title: '',
+  startedAt: '',
+  distanceKm: '',
+  hours: '0',
+  minutes: '0',
+  seconds: '0',
+  movingSeconds: '',
+  elevationGain: '',
+  averageHeartRate: '',
+  maxHeartRate: '',
+  source: 'manual',
+}
 
 function normalizePostsResponse(response) {
   const rows = Array.isArray(response)
@@ -22,7 +35,127 @@ function normalizePostsResponse(response) {
   return rows.map((post) => ({
     ...post,
     image_url: post.image_url ?? post.imageUrl ?? null,
+    run: normalizeRun(post.run ?? post.run_info ?? post.runInfo ?? post.run_data ?? post.runData ?? (Array.isArray(post.runs) ? post.runs[0] : null)),
   }))
+}
+
+function normalizeRun(run) {
+  if (typeof run === 'string') {
+    try {
+      run = JSON.parse(run)
+    } catch {
+      return null
+    }
+  }
+
+  if (!run || typeof run !== 'object') return null
+  const details = run.run && typeof run.run === 'object' ? run.run : run
+
+  return {
+    ...details,
+    distance_m: details.distance_m ?? details.distanceM,
+    elapsed_seconds: details.elapsed_seconds ?? details.elapsedSeconds,
+    moving_seconds: details.moving_seconds ?? details.movingSeconds,
+    elevation_gain_m: details.elevation_gain_m ?? details.elevationGainM,
+    average_heart_rate: details.average_heart_rate ?? details.averageHeartRate,
+    max_heart_rate: details.max_heart_rate ?? details.maxHeartRate,
+    started_at: details.started_at ?? details.startedAt,
+  }
+}
+
+function normalizeRunsResponse(response) {
+  const rows = Array.isArray(response)
+    ? response
+    : response?.runs ?? response?.data?.runs ?? response?.data
+
+  if (!Array.isArray(rows)) throw new Error('The runs API returned an unexpected response.')
+
+  return rows
+    .map(normalizeRun)
+    .filter(Boolean)
+}
+
+function getRunPaceSeconds(run) {
+  const distanceM = Number(run.distance_m)
+  const elapsedSeconds = Number(run.elapsed_seconds)
+  if (!Number.isFinite(distanceM) || distanceM <= 0 || !Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) {
+    return null
+  }
+  return elapsedSeconds / (distanceM / 1000)
+}
+
+function formatPace(secondsPerKm) {
+  if (!Number.isFinite(secondsPerKm) || secondsPerKm <= 0) return '—'
+  const roundedSeconds = Math.round(secondsPerKm)
+  const minutes = Math.floor(roundedSeconds / 60)
+  const seconds = roundedSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function buildRunPayload(runForm) {
+  if (!runForm.startedAt) return { error: 'Add the run date and start time' }
+
+  const startedAt = new Date(runForm.startedAt)
+  if (Number.isNaN(startedAt.getTime())) return { error: 'Enter a valid run date and start time' }
+
+  const distanceKm = Number(runForm.distanceKm)
+  if (!Number.isFinite(distanceKm) || distanceKm <= 0) return { error: 'Enter a run distance greater than 0 km' }
+  const distanceM = Math.round(distanceKm * 1000)
+  if (distanceM <= 0) return { error: 'Run distance must be at least 1 meter' }
+
+  const durationParts = [runForm.hours, runForm.minutes, runForm.seconds].map((part) => part === '' ? 0 : Number(part))
+  if (durationParts.some((part) => !Number.isInteger(part) || part < 0)) {
+    return { error: 'Run duration must use whole, non-negative values' }
+  }
+  const [hours, minutes, seconds] = durationParts
+  if (minutes > 59 || seconds > 59) return { error: 'Run duration minutes and seconds must be below 60' }
+  const elapsedSeconds = hours * 3600 + minutes * 60 + seconds
+  if (elapsedSeconds <= 0) return { error: 'Enter a run duration greater than 0' }
+
+  const optionalNumber = (value) => value === '' ? null : Number(value)
+  const movingSeconds = optionalNumber(runForm.movingSeconds)
+  const elevationGainM = optionalNumber(runForm.elevationGain)
+  const averageHeartRate = optionalNumber(runForm.averageHeartRate)
+  const maxHeartRate = optionalNumber(runForm.maxHeartRate)
+
+  if (movingSeconds !== null && (!Number.isInteger(movingSeconds) || movingSeconds < 0 || movingSeconds > elapsedSeconds)) {
+    return { error: 'Moving time must be whole seconds and cannot exceed total duration' }
+  }
+  if (elevationGainM !== null && (!Number.isFinite(elevationGainM) || elevationGainM < 0)) {
+    return { error: 'Elevation gain must be a non-negative number' }
+  }
+  for (const [label, value] of [['Average heart rate', averageHeartRate], ['Maximum heart rate', maxHeartRate]]) {
+    if (value !== null && (!Number.isInteger(value) || value < 1 || value > 250)) {
+      return { error: `${label} must be a whole number between 1 and 250` }
+    }
+  }
+  if (averageHeartRate !== null && maxHeartRate !== null && maxHeartRate < averageHeartRate) {
+    return { error: 'Maximum heart rate cannot be below average heart rate' }
+  }
+  if (runForm.source.length > 50) return { error: 'Run source must be 50 characters or fewer' }
+
+  return {
+    payload: {
+      title: runForm.title.trim() || null,
+      started_at: startedAt.toISOString(),
+      distance_m: distanceM,
+      elapsed_seconds: elapsedSeconds,
+      moving_seconds: movingSeconds,
+      elevation_gain_m: elevationGainM,
+      average_heart_rate: averageHeartRate,
+      max_heart_rate: maxHeartRate,
+      source: runForm.source.trim() || 'manual',
+    },
+  }
+}
+
+function formatDuration(totalSeconds) {
+  const seconds = Number(totalSeconds)
+  if (!Number.isFinite(seconds)) return ''
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = Math.floor(seconds % 60)
+  return [hours, minutes, remainder].map((part) => String(part).padStart(2, '0')).join(':')
 }
 
 export default function Feed() {
@@ -30,6 +163,9 @@ export default function Feed() {
   const { apiFetch } = auth
   const currentUserId = auth.user?.id
   const [posts, setPosts] = useState([])
+  const [latestRuns, setLatestRuns] = useState([])
+  const [runsLoading, setRunsLoading] = useState(true)
+  const [runsError, setRunsError] = useState('')
   const [friends, setFriends] = useState([])
   const [friendsLoaded, setFriendsLoaded] = useState(false)
   const [followedIds, setFollowedIds] = useState(() => new Set())
@@ -42,8 +178,11 @@ export default function Feed() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [visibility, setVisibility] = useState('')
+  const [includeRun, setIncludeRun] = useState(false)
+  const [runForm, setRunForm] = useState({ ...EMPTY_RUN_FORM })
   const [imageFile, setImageFile] = useState(null)
   const [posting, setPosting] = useState(false)
+  const [composerOpen, setComposerOpen] = useState(false)
   const imageInputRef = useRef(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState('')
 
@@ -85,7 +224,7 @@ export default function Feed() {
   }
 
   function loadPosts() {
-    return apiFetch(ENDPOINTS.posts)
+    return apiFetch(ENDPOINTS.posts, { cache: 'no-store' })
       .then((response) => {
         setPosts(normalizePostsResponse(response))
         setPostsError('')
@@ -97,6 +236,29 @@ export default function Feed() {
   useEffect(() => {
     loadPosts()
   }, [])
+
+  useEffect(() => {
+    if (!ENDPOINTS.runs) {
+      setRunsLoading(false)
+      return undefined
+    }
+
+    apiFetch(ENDPOINTS.runs, { cache: 'no-store' })
+      .then((response) => {
+        const rankedRuns = normalizeRunsResponse(response)
+          .filter((run) => getRunPaceSeconds(run) !== null)
+          .sort((a, b) => (
+            getRunPaceSeconds(a) - getRunPaceSeconds(b)
+            || Number(b.distance_m) - Number(a.distance_m)
+            || new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+          ))
+        setLatestRuns(rankedRuns.slice(0, 5))
+        setRunsError('')
+      })
+      .catch((err) => setRunsError(err.message))
+      .finally(() => setRunsLoading(false))
+    return undefined
+  }, [apiFetch])
 
   useEffect(() => {
     setFollowedLoaded(false)
@@ -159,6 +321,13 @@ export default function Feed() {
     if (!content.trim()) return setError('Write something first')
     if (!visibility) return setError('Choose Public or Friends only')
 
+    let runPayload
+    if (includeRun) {
+      const result = buildRunPayload(runForm)
+      if (result.error) return setError(result.error)
+      runPayload = result.payload
+    }
+
     setPosting(true)
     try {
       const formData = new FormData()
@@ -166,16 +335,28 @@ export default function Feed() {
       formData.append('content', content.trim())
       formData.append('visibility', visibility)
       if (imageFile) formData.append('image', imageFile)
+      if (runPayload) formData.append('run', JSON.stringify(runPayload))
 
-      await apiFetch(ENDPOINTS.createPost, {
+      const created = await apiFetch(ENDPOINTS.createPost, {
         method: 'POST',
         body: formData,
       })
       setTitle('')
       setContent('')
       setVisibility('')
+      setIncludeRun(false)
+      setRunForm({ ...EMPTY_RUN_FORM })
       removeImage()
+      setComposerOpen(false)
       await loadPosts()
+      const createdPost = created?.post ?? created?.data?.post
+      if (createdPost?.run) {
+        setPosts((current) => current.map((post) => (
+          String(post.id) === String(createdPost.id) && !post.run
+            ? { ...post, run: normalizeRun(createdPost.run) }
+            : post
+        )))
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -191,10 +372,21 @@ export default function Feed() {
           <h1>Club Feed <span aria-hidden="true">{'\u26A1'}</span></h1>
           <p>Updates, milestones, and stories from your running crew.</p>
         </div>
-        <span className="feed-mascot" aria-hidden="true">{'\u{1F3C3}'}</span>
       </header>
+      <div className="feed-layout">
+        <main className="feed-main">
+      <button
+        className="btn club-post-button composer-toggle"
+        type="button"
+        aria-expanded={composerOpen}
+        aria-controls="club-composer-form"
+        onClick={() => setComposerOpen((open) => !open)}
+      >
+        <span aria-hidden="true">{composerOpen ? '\u2212' : '\u002B'}</span>
+        {composerOpen ? 'Close form' : 'Create a post'}
+      </button>
 
-      <form className="club-composer card" onSubmit={handlePost}>
+      {composerOpen && <form id="club-composer-form" className="club-composer card composer-flash-in" onSubmit={handlePost}>
         <div className="composer-heading"><span className="composer-icon" aria-hidden="true">{'\u26A1'}</span><div><h2>Share an update</h2><p>Tell the crew what you have been up to.</p></div></div>
         <p className="composer-field">
           <input
@@ -238,6 +430,147 @@ export default function Feed() {
             Friends only
           </label>
         </div>
+        <label className="add-run-toggle">
+          <input
+            type="checkbox"
+            checked={includeRun}
+            onChange={(event) => setIncludeRun(event.target.checked)}
+            disabled={posting}
+          />
+          <span className="add-run-toggle-icon" aria-hidden="true">{ '\u26A1' }</span>
+          <span className="add-run-toggle-copy">
+            <strong>Add a run</strong>
+            <small>Attach distance, time, and workout stats to this post</small>
+          </span>
+        </label>
+        {includeRun && (
+          <fieldset className="run-fields" disabled={posting}>
+            <legend>Run details</legend>
+            <label className="run-field run-field-wide">
+              <span>Run title <small>Optional</small></span>
+              <input
+                className="form-control"
+                type="text"
+                placeholder="Easy morning miles"
+                value={runForm.title}
+                onChange={(event) => setRunForm((current) => ({ ...current, title: event.target.value }))}
+              />
+            </label>
+            <label className="run-field">
+              <span>Started at</span>
+              <input
+                className="form-control"
+                type="datetime-local"
+                value={runForm.startedAt}
+                onChange={(event) => setRunForm((current) => ({ ...current, startedAt: event.target.value }))}
+                required
+              />
+            </label>
+            <label className="run-field">
+              <span>Distance <small>km</small></span>
+              <input
+                className="form-control"
+                type="number"
+                min="0.001"
+                step="0.001"
+                placeholder="5.00"
+                value={runForm.distanceKm}
+                onChange={(event) => setRunForm((current) => ({ ...current, distanceKm: event.target.value }))}
+                required
+              />
+            </label>
+            <div className="run-field run-duration-field">
+              <span>Elapsed time <small>hh : mm : ss</small></span>
+              <div className="run-duration-inputs">
+                <input
+                  className="form-control"
+                  type="number"
+                  min="0"
+                  step="1"
+                  aria-label="Duration hours"
+                  placeholder="0"
+                  value={runForm.hours}
+                  onChange={(event) => setRunForm((current) => ({ ...current, hours: event.target.value }))}
+                  required
+                />
+                <input
+                  className="form-control"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  aria-label="Duration minutes"
+                  placeholder="00"
+                  value={runForm.minutes}
+                  onChange={(event) => setRunForm((current) => ({ ...current, minutes: event.target.value }))}
+                  required
+                />
+                <input
+                  className="form-control"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  aria-label="Duration seconds"
+                  placeholder="00"
+                  value={runForm.seconds}
+                  onChange={(event) => setRunForm((current) => ({ ...current, seconds: event.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            <label className="run-field">
+              <span>Moving time <small>seconds · optional</small></span>
+              <input
+                className="form-control"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Optional"
+                value={runForm.movingSeconds}
+                onChange={(event) => setRunForm((current) => ({ ...current, movingSeconds: event.target.value }))}
+              />
+            </label>
+            <label className="run-field">
+              <span>Elevation gain <small>meters · optional</small></span>
+              <input
+                className="form-control"
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Optional"
+                value={runForm.elevationGain}
+                onChange={(event) => setRunForm((current) => ({ ...current, elevationGain: event.target.value }))}
+              />
+            </label>
+            <label className="run-field">
+              <span>Average heart rate <small>bpm · optional</small></span>
+              <input
+                className="form-control"
+                type="number"
+                min="1"
+                max="250"
+                step="1"
+                placeholder="Optional"
+                value={runForm.averageHeartRate}
+                onChange={(event) => setRunForm((current) => ({ ...current, averageHeartRate: event.target.value }))}
+              />
+            </label>
+            <label className="run-field">
+              <span>Maximum heart rate <small>bpm · optional</small></span>
+              <input
+                className="form-control"
+                type="number"
+                min="1"
+                max="250"
+                step="1"
+                placeholder="Optional"
+                value={runForm.maxHeartRate}
+                onChange={(event) => setRunForm((current) => ({ ...current, maxHeartRate: event.target.value }))}
+              />
+            </label>
+          </fieldset>
+        )}
         <div className="post-image-field">
           <input
             ref={imageInputRef}
@@ -265,7 +598,7 @@ export default function Feed() {
         <button className="btn btn-primary club-post-button" type="submit" disabled={posting}>
           {posting ? 'Posting...' : 'Post'}
         </button>
-      </form>
+      </form>}
 
       {error && <p className="alert alert-danger page-error" role="alert">{error}</p>}
       {postsError && <p className="alert alert-danger page-error" role="alert">{postsError}</p>}
@@ -273,7 +606,7 @@ export default function Feed() {
 
       {loading && <p className="feed-empty">Loading posts...</p>}
       {!loading && !postsError && posts.length === 0 && <p className="feed-empty">No posts yet.</p>}
-      {posts.map((post) => {
+          {posts.map((post) => {
         const authorId = getPostAuthorId(post)
         const friendPost = authorId != null && friendIds.has(String(authorId))
         const ownPost = authorId != null && currentUserId != null && String(authorId) === String(currentUserId)
@@ -287,6 +620,46 @@ export default function Feed() {
 
               <span className="post-sparkle" aria-hidden="true">{'\u2726'}</span></div>
             <p className="post-content">{post.content}</p>
+            {post.run && (
+              <section className="post-run-card" aria-label="Run details">
+                <div className="post-run-heading">
+                  <span className="post-run-bolt" aria-hidden="true">{ '\u26A1' }</span>
+                  <div>
+                    <span className="post-run-kicker">RUN LOG</span>
+                    <h4>{post.run.title || 'Run recorded'}</h4>
+                  </div>
+                </div>
+                <div className="post-run-stats">
+                  <span className="post-run-stat">
+                    <svg className="post-run-stat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 21s-7-5.2-7-11a7 7 0 1 1 14 0c0 5.8-7 11-7 11Z" />
+                      <circle cx="12" cy="10" r="2.3" />
+                    </svg>
+                    <span className="post-run-stat-copy"><strong>{(Number(post.run.distance_m) / 1000).toFixed(2)}</strong><small>km</small></span>
+                  </span>
+                  <span className="post-run-stat">
+                    <svg className="post-run-stat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="13" r="8" />
+                      <path d="M12 9v4l2.7 1.8M9 2h6M12 2v3" />
+                    </svg>
+                    <span className="post-run-stat-copy"><strong>{formatDuration(post.run.elapsed_seconds)}</strong><small>duration</small></span>
+                  </span>
+                  {Number(post.run.elevation_gain_m) > 0 && <span className="post-run-stat"><span className="post-run-stat-copy"><strong>{post.run.elevation_gain_m}</strong><small>m elevation</small></span></span>}
+                  {post.run.average_heart_rate != null && (
+                    <span className="post-run-stat">
+                      <svg className="post-run-stat-icon post-run-heart-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.3 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+                        <path d="M4 12h4l2-3 3.2 6 2-3H20" />
+                      </svg>
+                      <span className="post-run-stat-copy"><strong>{post.run.average_heart_rate}</strong><small>avg bpm</small></span>
+                    </span>
+                  )}
+                  {post.run.max_heart_rate != null && <span className="post-run-stat"><span className="post-run-stat-copy"><strong>{post.run.max_heart_rate}</strong><small>max bpm</small></span></span>}
+                  {post.run.moving_seconds != null && <span className="post-run-stat"><span className="post-run-stat-copy"><strong>{formatDuration(post.run.moving_seconds)}</strong><small>moving time</small></span></span>}
+                </div>
+                {post.run.started_at && <time className="post-run-date" dateTime={post.run.started_at}>{new Date(post.run.started_at).toLocaleString()}</time>}
+              </section>
+            )}
             {post.image_url && (
               <img className="post-image" src={post.image_url} alt={post.title ? `Image attached to ${post.title}` : 'Image attached to post'} loading="lazy" />
             )}
@@ -300,7 +673,45 @@ export default function Feed() {
             </small>
           </article>
         )
-      })}
+          })}
+        </main>
+
+        <aside className="feed-sidebar" aria-label="Run leaderboard">
+          <section className="top-runs-card">
+            <div className="top-runs-heading">
+              <span className="top-runs-bolt" aria-hidden="true">{ '\u26A1' }</span>
+              <div>
+                <span className="post-run-kicker">CREW STATS</span>
+                <h2>Fastest runs</h2>
+              </div>
+            </div>
+            <p className="top-runs-caption">Ranked by average pace using elapsed time.</p>
+
+            {runsLoading && <p className="top-runs-state">Loading runs...</p>}
+            {!runsLoading && runsError && <p className="top-runs-state top-runs-error" role="alert">Could not load runs: {runsError}</p>}
+            {!runsLoading && !runsError && latestRuns.length === 0 && (
+              <p className="top-runs-state">No runs to show yet. Share a run in a feed post to get started.</p>
+            )}
+            {!runsLoading && !runsError && latestRuns.length > 0 && (
+              <ol className="top-runs-list">
+                {latestRuns.map((run, index) => (
+                  <li className="top-run-row" key={run.id ?? `${run.user_id}-${run.started_at}-${index}`}>
+                    <span className="top-run-rank">{String(index + 1).padStart(2, '0')}</span>
+                    <div className="top-run-details">
+                      <strong>{run.username || run.author || run.user?.username || 'Runner'}</strong>
+                      <span>{run.title || 'Run'} · {run.started_at ? new Date(run.started_at).toLocaleDateString() : 'Date unavailable'}</span>
+                    </div>
+                    <div className="top-run-metrics">
+                      <strong>{formatPace(getRunPaceSeconds(run))} <small>/km</small></strong>
+                      <span>{(Number(run.distance_m) / 1000).toFixed(2)} km · {formatDuration(run.elapsed_seconds)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </aside>
+      </div>
     </div>
   )
 }
