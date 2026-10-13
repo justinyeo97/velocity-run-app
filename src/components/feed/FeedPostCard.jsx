@@ -21,9 +21,15 @@ export default function FeedPostCard({
   const avatarUrl = post.author_avatar_url || post.avatar_url || post.user?.avatar_url || post.user?.picture
   const initials = authorName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
   const createdDate = postDate(post)
+  const cardVariant = [
+    'club-post',
+    'card',
+    post.run && 'club-post--run',
+    post.image_url && 'club-post--image',
+  ].filter(Boolean).join(' ')
 
   return (
-    <article className="club-post card">
+    <article className={cardVariant}>
       <header className="post-card-header">
         {avatarUrl
           ? <img className="post-avatar" src={avatarUrl} alt="" loading="lazy" />

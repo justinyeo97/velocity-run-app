@@ -261,7 +261,7 @@
   padding: clamp(28px, 4.5vw, 68px);
   background:
     radial-gradient(ellipse at 74% 31%, rgba(255, 227, 61, .12), transparent 39%),
-    linear-gradient(145deg, #a71927 0%, #72121f 46%, #241820 100%);
+    linear-gradient(145deg, rgba(167, 25, 39, .88) 0%, rgba(114, 18, 31, .84) 46%, rgba(36, 24, 32, .82) 100%);
 }
 
 .auth-story::before {
@@ -456,7 +456,7 @@
   padding: clamp(27px, 4.5vw, 68px) clamp(25px, 6.2vw, 88px);
   background:
     radial-gradient(ellipse at 100% 0%, rgba(226, 28, 42, .08), transparent 38%),
-    #111218;
+    rgba(17, 18, 24, .78);
 }
 
 .auth-panel-topline {
@@ -2393,7 +2393,7 @@
   min-height: 100vh;
   background:
     radial-gradient(ellipse at 88% 7%, rgba(226, 28, 42, .08), transparent 28rem),
-    var(--flash-ink);
+    rgba(17, 18, 24, .78);
 }
 
 .feed-page-container {
@@ -3437,5 +3437,165 @@
 
   .friends-crew-note {
     min-height: 245px;
+  }
+}
+
+/* Feed cards use restrained speed accents to keep the post content in focus. */
+.club-feed .club-post {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #202129 0%, #191a22 62%, #17181f 100%);
+}
+
+.club-feed .club-post::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 22px;
+  width: 82px;
+  height: 2px;
+  background: linear-gradient(90deg, #e21c2a, var(--flash-yellow));
+  content: "";
+  pointer-events: none;
+}
+
+.club-feed .club-post::after {
+  position: absolute;
+  z-index: 0;
+  top: -23px;
+  right: -38px;
+  width: 150px;
+  height: 70px;
+  background: repeating-linear-gradient(112deg, transparent 0 15px, rgba(255, 227, 61, .045) 15px 16px);
+  content: "";
+  opacity: .8;
+  pointer-events: none;
+  transform: skewX(-18deg);
+}
+
+.club-feed .club-post > * {
+  position: relative;
+  z-index: 1;
+}
+
+.club-feed .club-post--run::before {
+  width: 126px;
+}
+
+.club-feed .club-post:focus-within {
+  border-color: rgba(255, 227, 61, .42);
+  box-shadow: 0 0 0 2px rgba(255, 227, 61, .1), 0 12px 30px rgba(0, 0, 0, .2);
+}
+
+.club-feed .post-run-card {
+  padding: 15px 16px 13px;
+  border-color: rgba(255, 227, 61, .16);
+  border-left: 3px solid #e21c2a;
+  border-radius: 9px;
+  background: linear-gradient(112deg, rgba(226, 28, 42, .08), rgba(14, 15, 20, .76) 42%);
+}
+
+.club-feed .post-run-heading {
+  margin-bottom: 14px;
+}
+
+.club-feed .post-run-heading h4 {
+  line-height: 1.35;
+}
+
+.club-feed .post-run-stats.post-run-primary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.club-feed .post-run-primary-stats > .post-run-stat {
+  min-width: 0;
+  gap: 7px;
+}
+
+.club-feed .post-run-primary-stats .post-run-stat-icon {
+  flex-basis: 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+}
+
+.club-feed .post-run-primary-stats .post-run-stat-copy {
+  min-width: 0;
+}
+
+.club-feed .post-run-primary-stats strong {
+  font-size: clamp(14px, 2.2vw, 18px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.club-feed .post-run-primary-stats small {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.club-feed .post-run-extra-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 20px;
+  margin: 13px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+.club-feed .post-run-extra-stat {
+  display: grid;
+  gap: 2px;
+}
+
+.club-feed .post-run-extra-stat dt {
+  color: #a4a5b0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.club-feed .post-run-extra-stat dd {
+  margin: 0;
+  color: #ececf0;
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.club-feed .post-run-date {
+  margin-top: 12px;
+  font-size: 11px;
+}
+
+.club-feed .post-image {
+  object-fit: contain;
+  background: rgba(8, 9, 13, .58);
+}
+
+@media (max-width: 420px) {
+  .club-feed .post-run-card {
+    padding: 13px 11px 11px;
+  }
+
+  .club-feed .post-run-stats.post-run-primary-stats {
+    gap: 8px 5px;
+  }
+
+  .club-feed .post-run-primary-stats > .post-run-stat {
+    gap: 4px;
+  }
+
+  .club-feed .post-run-primary-stats .post-run-stat-icon {
+    flex-basis: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .club-feed .post-run-primary-stats small {
+    font-size: 10px;
   }
 }
