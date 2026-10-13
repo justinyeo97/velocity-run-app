@@ -44,7 +44,6 @@ export default function Friends() {
           <span className="page-eyebrow">YOUR RUNNING COMMUNITY</span>
           <h1>My Crew</h1>
           <p>Training partners, familiar faces, and the people who keep you moving.</p>
-          <span className="friends-heading-bolt" aria-hidden="true">{ '\u26A1' }</span>
         </header>
 
         {error && <p className="alert alert-danger page-error" role="alert">{error}</p>}

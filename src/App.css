@@ -805,19 +805,6 @@
   color: var(--flash-muted);
 }
 
-.friends-heading-bolt {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  margin: 22px auto 0;
-  border: 1px solid rgba(255, 227, 61, .28);
-  border-radius: 16px;
-  background: rgba(255, 227, 61, .1);
-  color: var(--flash-yellow);
-  font-size: 34px;
-}
-
 .friends-state,
 .friends-empty-state {
   width: min(100%, 690px);
@@ -2397,7 +2384,7 @@
 .club-feed .feed-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   max-width: none;
   margin: 0 0 26px;
   padding: 0 0 22px;
@@ -2428,19 +2415,6 @@
   margin: 8px 0 0;
   color: #a4a5b0;
   font-size: 13px;
-}
-
-.feed-heading-mark {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  place-items: center;
-  border: 1px solid rgba(255, 227, 61, .22);
-  border-radius: 14px 5px 14px 5px;
-  background: rgba(255, 227, 61, .08);
-  color: var(--flash-yellow);
-  font-size: 27px;
 }
 
 .club-feed .feed-layout {
@@ -3001,13 +2975,6 @@
     line-height: 1.5;
   }
 
-  .feed-heading-mark {
-    width: 40px;
-    height: 40px;
-    flex-basis: 40px;
-    font-size: 22px;
-  }
-
   .feed-compose-prompt {
     grid-template-columns: 38px minmax(0, 1fr);
     gap: 11px;
@@ -3096,7 +3063,7 @@
 
 .friends-page-heading {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 62px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   column-gap: 20px;
   margin-bottom: 33px;
@@ -3120,18 +3087,6 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.6;
-}
-
-.friends-heading-bolt {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  width: 58px;
-  height: 58px;
-  margin: 0;
-  border-radius: 15px 5px 15px 5px;
-  background: var(--flash-yellow);
-  color: var(--flash-ink);
-  box-shadow: 5px 5px 0 rgba(226, 28, 42, .35);
 }
 
 .friends-list-heading {
@@ -3429,8 +3384,6 @@
 
 @media (max-width: 560px) {
   .friends-page-heading {
-    grid-template-columns: minmax(0, 1fr) 44px;
-    column-gap: 10px;
     margin-bottom: 27px;
   }
 
@@ -3440,13 +3393,6 @@
 
   .friends-page-heading p {
     font-size: 11px;
-  }
-
-  .friends-heading-bolt {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px 4px 12px 4px;
-    font-size: 27px;
   }
 
   .friends-list-heading h2 {

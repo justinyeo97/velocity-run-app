@@ -379,7 +379,6 @@ export default function Feed() {
             <h1>The Speed Force</h1>
             <p>Training notes, shared miles, and good things from the crew.</p>
           </div>
-          <span className="feed-heading-mark" aria-hidden="true">{ '\u26A1' }</span>
         </header>
 
         <div className="feed-layout">
