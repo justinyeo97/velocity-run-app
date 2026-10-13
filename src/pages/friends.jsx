@@ -42,7 +42,7 @@ export default function Friends() {
       <div className="friends-page-content">
         <header className="friends-page-heading">
           <span className="page-eyebrow">YOUR RUNNING COMMUNITY</span>
-          <h1>My Crew</h1>
+          <h1>Fellow Speedsters</h1>
           <p>Training partners, familiar faces, and the people who keep you moving.</p>
         </header>
 
