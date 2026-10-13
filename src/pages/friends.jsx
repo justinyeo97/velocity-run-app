@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/login'
+import { useApi } from '../context/ApiContext'
 import { getFriends as fetchFriends } from '../services/friends'
 
 function getFriends(data) {
@@ -16,7 +16,7 @@ function getFriendName(friend) {
 }
 
 export default function Friends() {
-  const { apiFetch } = useAuth()
+  const { apiFetch } = useApi()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

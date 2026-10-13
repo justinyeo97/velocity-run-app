@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/login'
+import { useAuth } from '../context/AuthContext'
+import { useApi } from '../context/ApiContext'
 import { supabase } from '../lib/supabase'
 import { getFriends, getFollowing } from '../services/friends'
 import { getPosts } from '../services/posts'
@@ -71,7 +72,8 @@ function getPostDate(post) {
 }
 
 export default function Profile() {
-  const { apiFetch, user, token } = useAuth()
+  const { user, token } = useAuth()
+  const { apiFetch } = useApi()
   const [profile, setProfile] = useState(null)
   const [runs, setRuns] = useState([])
   const [posts, setPosts] = useState([])

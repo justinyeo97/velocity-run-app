@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../context/login'
+import { useAuth } from '../context/AuthContext'
+import { useApi } from '../context/ApiContext'
 import { getRuns } from '../services/runs'
 
 function normalizeRun(run) {
@@ -55,7 +56,8 @@ function formatRunDate(value) {
 }
 
 export default function Runs() {
-  const { apiFetch, user } = useAuth()
+  const { user } = useAuth()
+  const { apiFetch } = useApi()
   const [runs, setRuns] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

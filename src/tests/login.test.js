@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { useAuth } from '../context/login'
+import { useAuth } from '../context/AuthContext'
 import Login from '../pages/login'
 
-jest.mock('../context/login', () => ({
+jest.mock('../context/AuthContext', () => ({
   useAuth: jest.fn(),
 }))
 

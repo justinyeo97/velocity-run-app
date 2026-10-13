@@ -1,14 +1,14 @@
-import { ENDPOINTS } from '../lib/apiClient'
+import { apiRequest, ENDPOINTS } from '../lib/apiClient'
 
-export function loginRequest(apiFetch, email, password) {
-  return apiFetch(ENDPOINTS.login, {
+export function loginRequest(email, password) {
+  return apiRequest(ENDPOINTS.login, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
 }
 
-export function signupRequest(apiFetch, email, password, username) {
-  return apiFetch(ENDPOINTS.signup, {
+export function signupRequest(email, password, username) {
+  return apiRequest(ENDPOINTS.signup, {
     method: 'POST',
     body: JSON.stringify({ email, password, username }),
   })

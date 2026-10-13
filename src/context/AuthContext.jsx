@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { apiRequest } from '../lib/apiClient'
 import { loginRequest, signupRequest } from '../services/auth'
 import { requireSupabase, supabase } from '../lib/supabase'
 
@@ -52,12 +51,8 @@ export function AuthProvider({ children }) {
     if (supabase) supabase.auth.signOut().catch(() => {})
   }, [])
 
-  const apiFetch = useCallback((url, options = {}) => (
-    apiRequest(url, options, { token, onUnauthorized: logout })
-  ), [logout, token])
-
   async function login(email, password) {
-    const data = await loginRequest(apiFetch, email, password)
+    const data = await loginRequest(email, password)
     const newToken = data.token || data.access_token || data.session?.access_token
     if (!newToken) throw new Error('No token returned from /login')
     localStorage.setItem('token', newToken)
@@ -65,7 +60,7 @@ export function AuthProvider({ children }) {
   }
 
   async function signup(email, password, username) {
-    return signupRequest(apiFetch, email, password, username)
+    return signupRequest(email, password, username)
   }
 
   async function loginWithGoogle() {
@@ -77,13 +72,17 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
+  const user = getAuthUser(token || '')
+
   return (
-    <AuthContext.Provider value={{ token, user: getAuthUser(token || ''), authReady, login, signup, loginWithGoogle, logout, apiFetch }}>
+    <AuthContext.Provider value={{ token, user, authReady, login, signup, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  return useContext(AuthContext)
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used within an AuthProvider')
+  return context
 }

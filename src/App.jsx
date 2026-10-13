@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { AuthProvider, useAuth } from './context/login'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { ApiProvider } from './context/ApiContext'
 import Signup from './pages/signup'
 import Login from './pages/login'
 import Feed from './pages/feed'
@@ -105,36 +106,38 @@ function Nav() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <div className="app-shell">
-          <GlowCursor
-            className="app-glow-cursor"
-            color="#ffe33d"
-            secondaryColor="#e21c2a"
-            intensity={1.05}
-            trailWidth={3}
-            linger={1.1}
-            glow={1}
-            hotspot={0.55}
-            clickBurst={false}
-            quality="medium"
-            maxDevicePixelRatio={1.5}
-            theme="dark"
-          />
-          <div className="app-content">
-            <Nav />
-            <Routes>
-              <Route path="signup" element={<GuestOnly><Signup /></GuestOnly>} />
-              <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
-              <Route path="feed" element={<RequireAuth><Feed /></RequireAuth>} />
-              <Route path="friends" element={<RequireAuth><Friends /></RequireAuth>} />
-              <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
-              <Route path="runs" element={<RequireAuth><Runs /></RequireAuth>} />
-              <Route path="*" element={<Navigate to="/feed" replace />} />
-            </Routes>
+      <ApiProvider>
+        <BrowserRouter>
+          <div className="app-shell">
+            <GlowCursor
+              className="app-glow-cursor"
+              color="#ffe33d"
+              secondaryColor="#e21c2a"
+              intensity={1.05}
+              trailWidth={3}
+              linger={1.1}
+              glow={1}
+              hotspot={0.55}
+              clickBurst={false}
+              quality="medium"
+              maxDevicePixelRatio={1.5}
+              theme="dark"
+            />
+            <div className="app-content">
+              <Nav />
+              <Routes>
+                <Route path="signup" element={<GuestOnly><Signup /></GuestOnly>} />
+                <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
+                <Route path="feed" element={<RequireAuth><Feed /></RequireAuth>} />
+                <Route path="friends" element={<RequireAuth><Friends /></RequireAuth>} />
+                <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                <Route path="runs" element={<RequireAuth><Runs /></RequireAuth>} />
+                <Route path="*" element={<Navigate to="/feed" replace />} />
+              </Routes>
+            </div>
           </div>
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ApiProvider>
     </AuthProvider>
   )
 }

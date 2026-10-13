@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAuth } from '../context/login'
+import { useAuth } from '../context/AuthContext'
+import { useApi } from '../context/ApiContext'
 import { createPost, getPosts } from '../services/posts'
 import { getRuns } from '../services/runs'
 import { followUser, getFollowing, getFriends } from '../services/friends'
@@ -153,7 +154,7 @@ function buildRunPayload(runForm) {
 
 export default function Feed() {
   const auth = useAuth()
-  const { apiFetch } = auth
+  const { apiFetch } = useApi()
   const currentUserId = auth.user?.id
   const [posts, setPosts] = useState([])
   const [postOffset, setPostOffset] = useState(0)

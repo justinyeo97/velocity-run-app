@@ -1,10 +1,15 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { useAuth } from '../context/login'
+import { useAuth } from '../context/AuthContext'
+import { useApi } from '../context/ApiContext'
 import { ENDPOINTS } from '../lib/apiClient'
 import Feed from '../pages/feed'
 
-jest.mock('../context/login', () => ({
+jest.mock('../context/AuthContext', () => ({
   useAuth: jest.fn(),
+}))
+
+jest.mock('../context/ApiContext', () => ({
+  useApi: jest.fn(),
 }))
 
 jest.mock('../lib/apiClient', () => ({
@@ -54,9 +59,9 @@ beforeEach(() => {
   })
 
   useAuth.mockReturnValue({
-    apiFetch: mockApiFetch,
     user: { id: 'user-1' },
   })
+  useApi.mockReturnValue({ apiFetch: mockApiFetch })
 
   global.URL.createObjectURL = jest.fn(() => 'blob:post-preview')
   global.URL.revokeObjectURL = jest.fn()
