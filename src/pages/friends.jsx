@@ -59,27 +59,58 @@ export default function Friends() {
               <p>Your running community will show up here as you connect with friends.</p>
               <Link className="friends-feed-link" to="/feed">Head to the club feed <span aria-hidden="true">{ '\u2192' }</span></Link>
             </section>
-            : <>
+            : users.length > 0 && <>
               <div className="friends-list-heading">
-                <h2>Your Fellow Speedsters</h2>
-                <span>{users.length} {users.length === 1 ? 'friend' : 'friends'}</span>
+                <div>
+                  <span className="friends-list-kicker">YOUR RUNNING CIRCLE</span>
+                  <h2>{users.length === 1 ? 'Your first running partner' : users.length === 2 ? 'Your running partners' : 'Your running crew'}</h2>
+                </div>
+                <span className="friends-count-pill">{users.length} {users.length === 1 ? 'friend' : 'friends'}</span>
               </div>
-              <ul className="friends-grid list-unstyled">
-                {users.map((friend, index) => {
-                  const name = getFriendName(friend)
-                  const avatar = friend.avatar_url || friend.avatarUrl || friend.profile_image_url || friend.image_url || friend.picture
-                  const id = friend.id ?? friend.user_id ?? friend.userId ?? friend.friend_id ?? friend.friendId ?? `${name}-${index}`
-                  return (
-                    <li className="friend-card" key={id}>
-                      {avatar
-                        ? <img className="friend-avatar" src={avatar} alt={`${name}'s profile`} />
-                        : <span className="friend-avatar friend-avatar-fallback" aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
-                      <span className="friend-name">{name}</span>
-                      <span className="friend-card-bolt" aria-hidden="true">{ '\u26A1' }</span>
-                    </li>
-                  )
-                })}
-              </ul>
+              <div className={`friends-crew-layout friends-crew-layout--${users.length === 1 ? 'solo' : users.length === 2 ? 'duo' : 'group'}`}>
+                <ul className={`friends-grid friends-grid--${users.length === 1 ? 'solo' : users.length === 2 ? 'duo' : 'group'} list-unstyled`}>
+                  {users.map((friend, index) => {
+                    const name = getFriendName(friend)
+                    const avatar = friend.avatar_url || friend.avatarUrl || friend.profile_image_url || friend.image_url || friend.picture
+                    const id = friend.id ?? friend.user_id ?? friend.userId ?? friend.friend_id ?? friend.friendId ?? `${name}-${index}`
+                    return (
+                      <li className="friend-card" key={id}>
+                        <div className="friend-card-topline">
+                          <span>CREW MEMBER</span>
+                          <span>{String(index + 1).padStart(2, '0')}</span>
+                        </div>
+                        <div className="friend-card-person">
+                          {avatar
+                            ? <img className="friend-avatar" src={avatar} alt={`${name}'s profile`} />
+                            : <span className="friend-avatar friend-avatar-fallback" aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
+                          <span className="friend-card-identity">
+                            <span className="friend-card-caption">RUNNING PARTNER</span>
+                            <span className="friend-name">{name}</span>
+                          </span>
+                        </div>
+                        <div className="friend-card-footer">
+                          <span>In your running circle</span>
+                          <span className="friend-card-bolt" aria-hidden="true">{ '\u26A1' }</span>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+
+                {users.length <= 2 && (
+                  <aside className="friends-crew-note" aria-label="Your running community">
+                    <span className="crew-note-label">KEEP THE CREW CLOSE</span>
+                    <div className="crew-note-count">
+                      <strong>{String(users.length).padStart(2, '0')}</strong>
+                      <span>{users.length === 1 ? 'RUNNING PARTNER' : 'RUNNING PARTNERS'}</span>
+                    </div>
+                    <h2>{users.length === 1 ? 'Every great crew starts with one.' : 'Good miles are better shared.'}</h2>
+                    <p>Share your next update with your running circle and keep the conversation moving.</p>
+                    <Link className="friends-feed-link" to="/feed">Visit the club feed <span aria-hidden="true">{ '\u2192' }</span></Link>
+                    <span className="crew-note-bolt" aria-hidden="true">{ '\u26A1' }</span>
+                  </aside>
+                )}
+              </div>
             </>}
       </div>
     </main>
