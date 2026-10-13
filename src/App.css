@@ -1039,12 +1039,44 @@
 }
 
 .profile-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr) auto;
   align-items: center;
   gap: 22px;
   margin-bottom: 18px;
   padding: clamp(20px, 4vw, 30px);
+}
+
+.profile-hero::before {
+  position: absolute;
+  z-index: 0;
+  inset: -65% -45%;
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 22%,
+    rgba(255, 227, 61, .035) 23%,
+    rgba(255, 227, 61, .14) 23.4%,
+    rgba(226, 28, 42, .1) 24%,
+    transparent 25% 48%
+  );
+  background-size: 180% 100%;
+  content: "";
+  opacity: .72;
+  pointer-events: none;
+  animation: profile-lightning-flow 9s linear infinite;
+}
+
+.profile-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes profile-lightning-flow {
+  from { background-position: 100% 50%; }
+  to { background-position: -80% 50%; }
 }
 
 .profile-avatar {
@@ -2317,7 +2349,8 @@
 
   .auth-story-content,
   .auth-lightning-art,
-  .auth-form-wrap {
+  .auth-form-wrap,
+  .profile-hero::before {
     animation: none;
   }
 

@@ -376,7 +376,7 @@ export default function Feed() {
         <header className="feed-heading">
           <div>
             <span className="feed-kicker">YOUR RUNNING COMMUNITY</span>
-            <h1>Club Feed</h1>
+            <h1>The Speed Force</h1>
             <p>Training notes, shared miles, and good things from the crew.</p>
           </div>
           <span className="feed-heading-mark" aria-hidden="true">{ '\u26A1' }</span>
