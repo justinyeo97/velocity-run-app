@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useAuth } from '../context/AuthContext'
 import { useApi } from '../context/ApiContext'
 import { ENDPOINTS } from '../lib/apiClient'
@@ -26,6 +26,9 @@ const mockApiFetch = jest.fn()
 let createdPosts = []
 let createPostError = ''
 let runsResponse = []
+let paginatedPosts = null
+let friendsResponse = []
+let followingResponse = []
 
 async function openComposer() {
   fireEvent.click(screen.getByRole('button', { name: 'Create a post' }))
@@ -36,6 +39,9 @@ beforeEach(() => {
   createdPosts = []
   createPostError = ''
   runsResponse = []
+  paginatedPosts = null
+  friendsResponse = []
+  followingResponse = []
   mockApiFetch.mockReset().mockImplementation(async (url, options = {}) => {
     if (url === ENDPOINTS.createPost && options.method === 'POST') {
       if (createPostError) throw new Error(createPostError)
@@ -47,14 +53,24 @@ beforeEach(() => {
         content: body.get('content'),
         author: 'Test Runner',
         author_id: 'user-1',
+        run: body.get('run') ? JSON.parse(body.get('run')) : null,
       }
       createdPosts = [newPost, ...createdPosts]
       return newPost
     }
 
-    if (url === ENDPOINTS.posts || url.startsWith(`${ENDPOINTS.posts}?`)) return createdPosts
+    if (url === ENDPOINTS.posts || url.startsWith(`${ENDPOINTS.posts}?`)) {
+      if (paginatedPosts) {
+        const query = new URL(url, 'http://localhost').searchParams
+        const offset = Number(query.get('offset') || 0)
+        const limit = Number(query.get('limit') || 5)
+        return { posts: paginatedPosts.slice(offset, offset + limit), total: paginatedPosts.length }
+      }
+      return createdPosts
+    }
     if (url === ENDPOINTS.runs) return runsResponse
-    if (url === ENDPOINTS.follow || url === ENDPOINTS.friends) return []
+    if (url === ENDPOINTS.follow) return followingResponse
+    if (url === ENDPOINTS.friends) return friendsResponse
     throw new Error(`Unexpected API request: ${url}`)
   })
 
@@ -135,6 +151,72 @@ test('shows an API error when the post cannot be created', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Post could not be saved')
   expect(screen.getByPlaceholderText('Title')).toBeInTheDocument()
+})
+
+test('includes validated run details in the post payload', async () => {
+  render(<Feed />)
+  await screen.findByText('No posts yet.')
+  await openComposer()
+
+  fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Sunrise miles' } })
+  fireEvent.change(screen.getByPlaceholderText("What's on your mind?"), { target: { value: 'A steady morning run.' } })
+  fireEvent.click(screen.getByLabelText('Public'))
+  fireEvent.click(screen.getByLabelText(/add a run/i))
+  fireEvent.change(screen.getByLabelText('Started at'), { target: { value: '2026-10-12T06:30' } })
+  fireEvent.change(screen.getByPlaceholderText('5.00'), { target: { value: '5' } })
+  fireEvent.change(screen.getByLabelText('Duration minutes'), { target: { value: '28' } })
+  fireEvent.change(screen.getByLabelText('Duration seconds'), { target: { value: '30' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Post' }))
+
+  expect(await screen.findByRole('heading', { name: 'Sunrise miles' })).toBeInTheDocument()
+  const createRequest = mockApiFetch.mock.calls.find(
+    ([url, options]) => url === ENDPOINTS.createPost && options?.method === 'POST',
+  )
+  const run = JSON.parse(createRequest[1].body.get('run'))
+  expect(run).toMatchObject({
+    distance_m: 5000,
+    elapsed_seconds: 1710,
+  })
+  expect(run.started_at).toBe(new Date('2026-10-12T06:30').toISOString())
+})
+
+test('loads the next page of posts on demand', async () => {
+  paginatedPosts = Array.from({ length: 7 }, (_, index) => ({
+    id: `post-${index + 1}`,
+    title: `Run update ${index + 1}`,
+    content: 'A good run.',
+    author: 'Test Runner',
+    author_id: 'user-1',
+  }))
+
+  render(<Feed />)
+  expect(await screen.findByRole('heading', { name: 'Run update 1' })).toBeInTheDocument()
+  expect(screen.getAllByRole('heading', { name: /Run update/ })).toHaveLength(5)
+  fireEvent.click(screen.getByRole('button', { name: 'Load 5 more posts' }))
+
+  expect(await screen.findByRole('heading', { name: 'Run update 7' })).toBeInTheDocument()
+  expect(screen.getAllByRole('heading', { name: /Run update/ })).toHaveLength(7)
+})
+
+test('follows a runner from their feed post', async () => {
+  createdPosts = [{
+    id: 'post-2',
+    title: 'Track session',
+    content: 'Intervals with the crew.',
+    author: 'Another Runner',
+    author_id: 'user-2',
+  }]
+
+  render(<Feed />)
+  expect(await screen.findByRole('heading', { name: 'Track session' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
+
+  await waitFor(() => {
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      ENDPOINTS.follow,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ followed_id: 'user-2' }) }),
+    )
+  })
 })
 
 test('ranks valid runs by fastest elapsed-time pace', async () => {
