@@ -7,6 +7,7 @@ import Feed from './pages/feed'
 import Friends from './pages/friends'
 import Profile from './pages/profile'
 import Runs from './pages/runs'
+import GlowCursor from './components/effects/GlowCursor'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 
@@ -105,16 +106,34 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Nav />
-        <Routes>
-          <Route path="signup" element={<GuestOnly><Signup /></GuestOnly>} />
-          <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
-          <Route path="feed" element={<RequireAuth><Feed /></RequireAuth>} />
-          <Route path="friends" element={<RequireAuth><Friends /></RequireAuth>} />
-          <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="runs" element={<RequireAuth><Runs /></RequireAuth>} />
-          <Route path="*" element={<Navigate to="/feed" replace />} />
-        </Routes>
+        <div className="app-shell">
+          <GlowCursor
+            className="app-glow-cursor"
+            color="#ffe33d"
+            secondaryColor="#e21c2a"
+            intensity={1.05}
+            trailWidth={3}
+            linger={1.1}
+            glow={1}
+            hotspot={0.55}
+            clickBurst={false}
+            quality="medium"
+            maxDevicePixelRatio={1.5}
+            theme="dark"
+          />
+          <div className="app-content">
+            <Nav />
+            <Routes>
+              <Route path="signup" element={<GuestOnly><Signup /></GuestOnly>} />
+              <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
+              <Route path="feed" element={<RequireAuth><Feed /></RequireAuth>} />
+              <Route path="friends" element={<RequireAuth><Friends /></RequireAuth>} />
+              <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
+              <Route path="runs" element={<RequireAuth><Runs /></RequireAuth>} />
+              <Route path="*" element={<Navigate to="/feed" replace />} />
+            </Routes>
+          </div>
+        </div>
       </BrowserRouter>
     </AuthProvider>
   )
