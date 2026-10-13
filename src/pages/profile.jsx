@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ENDPOINTS } from '../App'
 import { useAuth } from '../context/login'
 import { supabase } from '../lib/supabase'
+import { getFriends, getFollowing } from '../services/friends'
+import { getPosts } from '../services/posts'
+import { getRuns } from '../services/runs'
 
 function getRows(response, key) {
   if (Array.isArray(response)) return response
@@ -81,7 +83,6 @@ export default function Profile() {
 
   useEffect(() => {
     let active = true
-    const endpoints = [ENDPOINTS.posts, ENDPOINTS.runs, ENDPOINTS.friends, ENDPOINTS.follow]
     const authUserRequest = supabase && token
       ? supabase.auth.getUser(token).then(({ data, error }) => {
         if (error) throw error
@@ -90,7 +91,12 @@ export default function Profile() {
       : Promise.resolve(null)
 
     Promise.all([
-      Promise.allSettled(endpoints.map((endpoint) => apiFetch(endpoint, { cache: 'no-store' }))),
+      Promise.allSettled([
+        getPosts(apiFetch, null, { cache: 'no-store' }),
+        getRuns(apiFetch, { cache: 'no-store' }),
+        getFriends(apiFetch, { cache: 'no-store' }),
+        getFollowing(apiFetch, { cache: 'no-store' }),
+      ]),
       authUserRequest.catch(() => null),
     ])
       .then(([results, authUser]) => {

@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/login'
+import AuthScreen from '../components/auth/AuthScreen'
+import { AuthDivider, AuthTextField, GoogleSignInButton } from '../components/auth/AuthControls'
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth()
@@ -33,55 +35,47 @@ export default function Login() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="auth-brand" to="/login" aria-label="Velocity Run Club home">
-        <span className="brand-mark" aria-hidden="true">{ '\u26A1' }</span>
-        <span>VELOCITY<span className="brand-subtitle">RUN CLUB</span></span>
-      </Link>
+    <AuthScreen
+      mode="login"
+      eyebrow="YOUR CREW IS AHEAD"
+      title="Welcome back."
+      description="Sign in and pick up where your next run begins."
+      storyTitle={<>THE ROAD<br /><span>IS YOURS.</span></>}
+      storyDescription="Keep your miles moving with a community that runs at your pace."
+      switchPrompt="New to the club?"
+      switchAction="Create an account"
+      switchTo="/signup"
+    >
+      <form className="auth-credentials" onSubmit={handleSubmit}>
+        <GoogleSignInButton onClick={handleGoogleLogin} pending={googlePending} />
+        <AuthDivider>OR SIGN IN WITH EMAIL</AuthDivider>
 
-      <form className="auth-card card" onSubmit={handleSubmit}>
-        <div className="auth-heading">
-          <span className="auth-kicker">WELCOME BACK, RUNNER</span>
-          <h1>Log in</h1>
-          <p className="auth-intro">Your crew is ready when you are.</p>
-        </div>
-
-        <button className="google-login-button" type="button" onClick={handleGoogleLogin} disabled={googlePending}>
-          <span className="google-login-mark" aria-hidden="true">G</span>
-          {googlePending ? 'Connecting to Google...' : 'Continue with Google'}
-        </button>
-
-        <div className="auth-divider"><span>OR CONTINUE WITH EMAIL</span></div>
-
-        <label className="auth-field" htmlFor="login-email">Email</label>
-        <input
+        <AuthTextField
           id="login-email"
-          className="form-control auth-input"
+          label="Email address"
           type="email"
           placeholder="Email"
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           required
         />
-
-        <label className="auth-field" htmlFor="login-password">Password</label>
-        <input
+        <AuthTextField
           id="login-password"
-          className="form-control auth-input"
+          label="Password"
           type="password"
           placeholder="Password"
           autoComplete="current-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           required
         />
 
-        <button className="btn auth-submit" type="submit">Log in</button>
-        {error && <p className="auth-error" role="alert">{error}</p>}
-        <p className="auth-switch">No account yet? <Link to="/signup">Sign up</Link></p>
+        <button className="auth-primary-action" type="submit">
+          <span>Log in</span><span aria-hidden="true">→</span>
+        </button>
+        {error && <p className="auth-feedback" role="alert">{error}</p>}
       </form>
-      <p className="auth-tagline"><span className="pulse-dot" />EVERY SECOND COUNTS</p>
-    </main>
+    </AuthScreen>
   )
 }

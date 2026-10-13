@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { ENDPOINTS } from '../App'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { apiRequest } from '../lib/apiClient'
+import { loginRequest, signupRequest } from '../services/auth'
 import { requireSupabase, supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
@@ -45,41 +46,18 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  function logout() {
+  const logout = useCallback(() => {
     localStorage.removeItem('token')
     setToken(null)
     if (supabase) supabase.auth.signOut().catch(() => {})
-  }
+  }, [])
 
-  async function apiFetch(url, options = {}) {
-    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
-    const headers = {
-      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    }
-
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    })
-    const body = await res.json().catch(() => ({}))
-
-    if (res.status === 401 && token) logout()
-    if (!res.ok) {
-      const err = body.error?.message || body.error || body.message
-      const requestError = new Error(err || `Request failed (${res.status})`)
-      requestError.status = res.status
-      throw requestError
-    }
-    return body.data ?? body
-  }
+  const apiFetch = useCallback((url, options = {}) => (
+    apiRequest(url, options, { token, onUnauthorized: logout })
+  ), [logout, token])
 
   async function login(email, password) {
-    const data = await apiFetch(ENDPOINTS.login, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+    const data = await loginRequest(apiFetch, email, password)
     const newToken = data.token || data.access_token || data.session?.access_token
     if (!newToken) throw new Error('No token returned from /login')
     localStorage.setItem('token', newToken)
@@ -87,10 +65,7 @@ export function AuthProvider({ children }) {
   }
 
   async function signup(email, password, username) {
-    return apiFetch(ENDPOINTS.signup, {
-      method: 'POST',
-      body: JSON.stringify({ email, password, username }),
-    })
+    return signupRequest(apiFetch, email, password, username)
   }
 
   async function loginWithGoogle() {

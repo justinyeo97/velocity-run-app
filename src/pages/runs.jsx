@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ENDPOINTS } from '../App'
 import { useAuth } from '../context/login'
+import { getRuns } from '../services/runs'
 
 function normalizeRun(run) {
   if (typeof run === 'string') {
@@ -63,7 +63,7 @@ export default function Runs() {
   useEffect(() => {
     let active = true
 
-    apiFetch(ENDPOINTS.runs, { cache: 'no-store' })
+    getRuns(apiFetch, { cache: 'no-store' })
       .then((response) => {
         const userRuns = normalizeRunsResponse(response).filter((run) => {
           const ownerId = getRunOwnerId(run)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/login'
-import { ENDPOINTS } from '../App'
+import { getFriends as fetchFriends } from '../services/friends'
 
 function getFriends(data) {
   const friends = Array.isArray(data)
@@ -23,7 +23,7 @@ export default function Friends() {
 
   useEffect(() => {
     let active = true
-    apiFetch(ENDPOINTS.friends, { cache: 'no-store' })
+    fetchFriends(apiFetch, { cache: 'no-store' })
       .then((data) => {
         if (active) setUsers(getFriends(data))
       })

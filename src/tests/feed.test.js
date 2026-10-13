@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { useAuth } from '../context/login'
-import { ENDPOINTS } from '../App'
+import { ENDPOINTS } from '../lib/apiClient'
 import Feed from '../pages/feed'
 
 jest.mock('../context/login', () => ({
   useAuth: jest.fn(),
 }))
 
-jest.mock('../App', () => ({
+jest.mock('../lib/apiClient', () => ({
   ENDPOINTS: {
     posts: '/api/posts',
     createPost: '/api/posts',

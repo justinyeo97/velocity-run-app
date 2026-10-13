@@ -10,34 +10,15 @@ import Runs from './pages/runs'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 
-export const ENDPOINTS = {
-  // signup: `${API_URL}/signup`, // POST { email, password, username }
-  signup: 'https://soc-med-api-production.up.railway.app/auth/signup',
-  // login: `${API_URL}/login`, // POST { email, password } -> token
-  login: 'https://soc-med-api-production.up.railway.app/auth/login',
-  // posts: `${API_URL}/posts`, // GET public + friends' posts
-  posts: 'https://soc-med-api-production.up.railway.app/posts',
-  // createPost: `${API_URL}/posts`, // POST { title, content, visibility } -> new post
-  createPost: 'https://soc-med-api-production.up.railway.app/posts',
-  // users: `${API_URL}/users`, // GET all users
-  users: 'https://soc-med-api-production.up.railway.app/users',
-  // friends: `${API_URL}/friends`, // GET the current user's friends
-  friends: 'https://soc-med-api-production.up.railway.app/friends',
-  // follow: `${API_URL}/follow`, // POST { followed_id } & GET all followed users
-  follow: 'https://soc-med-api-production.up.railway.app/follow',
-  // runs: `${API_URL}/runs`, // GET the current user's runs OR post a new run
-  runs: 'https://soc-med-api-production.up.railway.app/runs',
-}
-
 function RequireAuth({ children }) {
   const { token, authReady } = useAuth()
-  if (!authReady) return <main className="auth-card card">Loading your session…</main>
+  if (!authReady) return <main className="auth-session-loading">Loading your session…</main>
   return token ? children : <Navigate to="/login" replace />
 }
 
 function GuestOnly({ children }) {
   const { token, authReady } = useAuth()
-  if (!authReady) return <main className="auth-card card">Loading your session…</main>
+  if (!authReady) return <main className="auth-session-loading">Loading your session…</main>
   return token ? <Navigate to="/feed" replace /> : children
 }
 

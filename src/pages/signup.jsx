@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/login'
+import AuthScreen from '../components/auth/AuthScreen'
+import { AuthDivider, AuthTextField, GoogleSignInButton } from '../components/auth/AuthControls'
 
 export default function Signup() {
   const { signup, loginWithGoogle } = useAuth()
@@ -34,66 +36,56 @@ export default function Signup() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="auth-brand" to="/signup" aria-label="Velocity Run Club home">
-        <span className="brand-mark" aria-hidden="true">{ '\u26A1' }</span>
-        <span>VELOCITY<span className="brand-subtitle">RUN CLUB</span></span>
-      </Link>
+    <AuthScreen
+      mode="signup"
+      eyebrow="JOIN THE RUNNING COMMUNITY"
+      title="Find your pace."
+      description="Create an account to share runs and meet your crew."
+      storyTitle={<>FIND YOUR<br /><span>RUNNING CREW.</span></>}
+      storyDescription="Small steps. Shared miles. A club that keeps you showing up."
+      switchPrompt="Already part of the club?"
+      switchAction="Log in"
+      switchTo="/login"
+    >
+      <form className="auth-credentials" onSubmit={handleSubmit}>
+        <GoogleSignInButton onClick={handleGoogleSignup} pending={googlePending} />
+        <AuthDivider>OR CREATE AN ACCOUNT WITH EMAIL</AuthDivider>
 
-      <form className="auth-card card" onSubmit={handleSubmit}>
-        <div className="auth-heading">
-          <span className="auth-kicker">BECOME SPEED</span>
-          <h1>Sign up</h1>
-          <p className="auth-intro">Connect with runners and share your progress.</p>
-        </div>
-
-        <button className="google-login-button" type="button" onClick={handleGoogleSignup} disabled={googlePending}>
-          <span className="google-login-mark" aria-hidden="true">G</span>
-          {googlePending ? 'Connecting to Google...' : 'Continue with Google'}
-        </button>
-
-        <div className="auth-divider"><span>OR SIGN UP WITH EMAIL</span></div>
-
-        <label className="auth-field" htmlFor="signup-username">Username</label>
-        <input
+        <AuthTextField
           id="signup-username"
-          className="form-control auth-input"
+          label="Username"
           type="text"
-          placeholder="Username"
+          placeholder="Choose a username"
           autoComplete="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(event) => setUsername(event.target.value)}
         />
-
-        <label className="auth-field" htmlFor="signup-email">Email</label>
-        <input
+        <AuthTextField
           id="signup-email"
-          className="form-control auth-input"
+          label="Email address"
           type="email"
-          placeholder="Email"
+          placeholder="you@example.com"
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           required
         />
-
-        <label className="auth-field" htmlFor="signup-password">Password</label>
-        <input
+        <AuthTextField
           id="signup-password"
-          className="form-control auth-input"
+          label="Password"
           type="password"
-          placeholder="Password"
+          placeholder="Create a password"
           autoComplete="new-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(event) => setPassword(event.target.value)}
           required
         />
 
-        <button className="btn auth-submit" type="submit">Sign up</button>
-        {error && <p className="auth-error" role="alert">{error}</p>}
-        <p className="auth-switch">Already have an account? <Link to="/login">Log in</Link></p>
+        <button className="auth-primary-action" type="submit">
+          <span>Create account</span><span aria-hidden="true">→</span>
+        </button>
+        {error && <p className="auth-feedback" role="alert">{error}</p>}
       </form>
-      <p className="auth-tagline"><span className="pulse-dot" />EVERY SECOND COUNTS</p>
-    </main>
+    </AuthScreen>
   )
 }
